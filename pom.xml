@@ -56,6 +56,15 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- spring-boot-starter-test excludes junit-vintage-engine by default; RunCucumberTest
+		     uses JUnit 4's @RunWith(Cucumber.class), so the JUnit Platform provider needs this
+		     engine on the classpath or Surefire silently runs zero tests. -->
+		<dependency>
+			<groupId>org.junit.vintage</groupId>
+			<artifactId>junit-vintage-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>

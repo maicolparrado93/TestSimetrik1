@@ -122,24 +122,33 @@ public class MyStepDefinitions {
             // en el markup de Google que el widget de conteo.
             List<WebElement> resultados = driver.findElements(By.cssSelector("#search a h3"));
             if (resultados.isEmpty()) {
-                // Ninguna de las dos estrategias encontro nada: guardar evidencia
-                // (screenshot + HTML) para diagnosticar que esta devolviendo Google
-                // realmente en este entorno, en vez de fallar a ciegas otra vez.
-                guardarDiagnostico("sin-resultados");
+                // Ninguna de las dos estrategias encontro nada: volcar diagnostico al
+                // log del test (visible directamente en la salida de CI, a diferencia
+                // de un archivo en target/, que requiere descargar el artifact) en vez
+                // de fallar a ciegas otra vez.
+                imprimirDiagnostico();
             }
             return resultados.size();
         }
     }
 
-    private void guardarDiagnostico(String nombre) {
-        guardarScreenshot("diagnostico-" + nombre);
-        try {
-            Path destino = Path.of("target/screenshots/diagnostico-" + nombre + ".html");
-            Files.createDirectories(destino.getParent());
-            Files.writeString(destino, driver.getPageSource());
-        } catch (IOException e) {
-            System.err.println("No se pudo guardar el HTML de diagnostico: " + e.getMessage());
-        }
+    private void imprimirDiagnostico() {
+        String source = driver.getPageSource();
+        System.err.println("=== DIAGNOSTICO: sin resultados detectados ===");
+        System.err.println("URL actual: " + driver.getCurrentUrl());
+        System.err.println("Titulo: " + driver.getTitle());
+        System.err.println("#search presente: " + !driver.findElements(By.id("search")).isEmpty());
+        System.err.println("#rso presente: " + !driver.findElements(By.cssSelector("#rso")).isEmpty());
+        System.err.println("form[action*=consent] presente: " + !driver.findElements(By.cssSelector("form[action*='consent']")).isEmpty());
+        System.err.println("Contiene 'unusual traffic': " + source.toLowerCase().contains("unusual traffic"));
+        System.err.println("Contiene 'captcha': " + source.toLowerCase().contains("captcha"));
+        System.err.println("Contiene 'consent': " + source.toLowerCase().contains("consent"));
+        System.err.println("Longitud del HTML: " + source.length());
+        System.err.println("--- primeros 3000 caracteres del <body> ---");
+        int bodyStart = source.indexOf("<body");
+        String bodySnippet = bodyStart >= 0 ? source.substring(bodyStart, Math.min(source.length(), bodyStart + 3000)) : source.substring(0, Math.min(source.length(), 3000));
+        System.err.println(bodySnippet);
+        System.err.println("=== FIN DIAGNOSTICO ===");
     }
 
     private void guardarScreenshot(String nombre) {

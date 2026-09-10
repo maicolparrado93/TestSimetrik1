@@ -15,6 +15,14 @@
 	<description>Ejecución pruebas cucumber y selenium</description>
 	<properties>
 		<java.version>17</java.version>
+		<!-- spring-boot-starter-parent 3.1.5 pins its own transitive selenium.version
+		     (4.8.3) via dependency management, which silently overrides the version
+		     declared below on selenium-java's own submodules (selenium-remote-driver,
+		     selenium-chrome-driver, etc.) even though selenium-java itself resolves to
+		     the newer version. Override the property so the whole Selenium stack stays
+		     on one consistent, current version with a Selenium Manager that can match
+		     modern Chrome/Chromium releases. -->
+		<selenium.version>4.27.0</selenium.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -45,7 +53,7 @@
 		<dependency>
 			<groupId>org.seleniumhq.selenium</groupId>
 			<artifactId>selenium-java</artifactId>
-			<version>4.15.0</version> <!-- Asegúrate de utilizar la versión más reciente -->
+			<version>4.27.0</version> <!-- Asegúrate de utilizar la versión más reciente -->
 		</dependency>
 
 		<!-- JUnit dependency -->

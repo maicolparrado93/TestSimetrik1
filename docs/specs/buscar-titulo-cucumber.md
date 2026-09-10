@@ -1,6 +1,6 @@
 # Buscar "cucumber" en Google y validar el título de resultados
 
-**Estado:** Listo para implementar
+**Estado:** Implementado (ver `@BuscarTituloCucumber` en `google.feature`)
 **Feature file objetivo:** src/test/java/com/demo/features/google.feature
 **Tag propuesto:** @BuscarTituloCucumber
 
@@ -11,6 +11,7 @@
 | v1 | Borrador inicial a partir de la solicitud: "busque 'cucumber' en Google y valide que el título de la página lo contenga". Solo cubría el `Then` de título, sin criterio de mayúsculas/minúsculas ni manejo de resultados cero. |
 | v2 | Revisión: se preguntó qué pasa si Google no devuelve resultados o redirige a una página de corrección ortográfica. Se decidió **no** cubrir ese caso aquí (ya lo cubre `@BuscarPalabra` como precondición general) y se dejó explícito en "Alcance". Se resolvió la comparación de título como *case-insensitive* porque Chrome puede capitalizar el `<title>` de forma distinta según la palabra buscada. |
 | v3 | Refinamiento final: se ajustó el criterio de aceptación para no acoplar el escenario al conteo de resultados (eso ya es responsabilidad de `@BuscarPalabra`); este escenario se enfoca únicamente en el contenido del `<title>`. Se añadieron notas de implementación sobre qué step reutilizar (`ir al navegador de Google Chrome`, `digitar la palabra {string} en el buscador`, `dar enter para que se inicie la busqueda`) para no duplicar steps existentes, y se marcó **Listo para implementar**. |
+| v4 | Implementado: el escenario se agregó a `google.feature` tal cual el Gherkin de este spec, con el nuevo `Then` en `MyStepDefinitions` (comparación case-insensitive + captura de screenshot como evidencia). Estado actualizado a **Implementado**. |
 
 ## Objetivo
 

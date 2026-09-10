@@ -118,37 +118,16 @@ public class MyStepDefinitions {
         } catch (TimeoutException e) {
             // Google no siempre renderiza el texto "About X results" (id result-stats)
             // con ese id exacto; como respaldo se cuentan los resultados organicos en
-            // el contenedor principal de resultados (id "search"), mucho mas estable
-            // en el markup de Google que el widget de conteo.
-            List<WebElement> resultados = driver.findElements(By.cssSelector("#search a h3"));
-            if (resultados.isEmpty()) {
-                // Ninguna de las dos estrategias encontro nada: volcar diagnostico al
-                // log del test (visible directamente en la salida de CI, a diferencia
-                // de un archivo en target/, que requiere descargar el artifact) en vez
-                // de fallar a ciegas otra vez.
-                imprimirDiagnostico();
-            }
-            return resultados.size();
+            // el contenedor principal de resultados (id "search"), mas estable en el
+            // markup de Google que el widget de conteo.
+            //
+            // NOTA: en runners de GitHub Actions esto tambien devuelve 0 porque Google
+            // le muestra un reCAPTCHA a las IPs compartidas de GitHub Actions en vez de
+            // resultados (confirmado inspeccionando el HTML de la pagina en CI) — un
+            // bloqueo anti-bot deterministico, no un problema de selector. Ver
+            // CLAUDE.md/README: por eso este job de CI corre con continue-on-error.
+            return driver.findElements(By.cssSelector("#search a h3")).size();
         }
-    }
-
-    private void imprimirDiagnostico() {
-        String source = driver.getPageSource();
-        System.err.println("=== DIAGNOSTICO: sin resultados detectados ===");
-        System.err.println("URL actual: " + driver.getCurrentUrl());
-        System.err.println("Titulo: " + driver.getTitle());
-        System.err.println("#search presente: " + !driver.findElements(By.id("search")).isEmpty());
-        System.err.println("#rso presente: " + !driver.findElements(By.cssSelector("#rso")).isEmpty());
-        System.err.println("form[action*=consent] presente: " + !driver.findElements(By.cssSelector("form[action*='consent']")).isEmpty());
-        System.err.println("Contiene 'unusual traffic': " + source.toLowerCase().contains("unusual traffic"));
-        System.err.println("Contiene 'captcha': " + source.toLowerCase().contains("captcha"));
-        System.err.println("Contiene 'consent': " + source.toLowerCase().contains("consent"));
-        System.err.println("Longitud del HTML: " + source.length());
-        System.err.println("--- primeros 3000 caracteres del <body> ---");
-        int bodyStart = source.indexOf("<body");
-        String bodySnippet = bodyStart >= 0 ? source.substring(bodyStart, Math.min(source.length(), bodyStart + 3000)) : source.substring(0, Math.min(source.length(), 3000));
-        System.err.println(bodySnippet);
-        System.err.println("=== FIN DIAGNOSTICO ===");
     }
 
     private void guardarScreenshot(String nombre) {

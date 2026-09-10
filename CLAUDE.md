@@ -33,6 +33,8 @@ There is no linter configured in this project.
 
 `.github/workflows/tests.yml` runs `./mvnw clean test` on every push to `main` and on every PR, using GitHub Actions' preinstalled Chrome. It uploads the Cucumber HTML report (`target/cucumber-reports`) and scenario screenshots (`target/screenshots`) as build artifacts, always (even on failure), for debugging and as portfolio evidence.
 
+**The test step runs with `continue-on-error: true`, deliberately.** Google shows a reCAPTCHA to GitHub Actions' shared runner IPs instead of real search results — confirmed by inspecting the page HTML in a CI run (`<div id="recaptcha" class="g-recaptcha">` appears instead of `#result-stats`/organic results). This makes `@BuscarPalabra`, `@BuscarSelenium` and `@BuscarTituloCucumber` fail deterministically in CI; it is not a selector bug or a flake, and there is no code fix for it (working around Google's bot-detection is out of scope, deliberately). The `Report suite outcome` step writes the real pass/fail to the run's Job Summary regardless, so the failure stays visible without turning the PR check red. `@CampoBusquedaVisible` doesn't search, so it isn't affected. All four scenarios pass locally from a normal (non-datacenter) IP.
+
 ## Architecture
 
 - **`RunCucumberTest`** (`src/test/java/com/demo/cucumberselenium/RunCucumberTest.java`) is the JUnit entry point that wires Cucumber to JUnit via `@CucumberOptions`. It points `features` at `src/test/java/com/demo/features` and `glue` at the `com.demo` package (so step definitions can live in any sub-package under `com.demo`, e.g. `com.demo.steps`).

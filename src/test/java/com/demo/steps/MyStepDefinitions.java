@@ -121,7 +121,24 @@ public class MyStepDefinitions {
             // el contenedor principal de resultados (id "search"), mucho mas estable
             // en el markup de Google que el widget de conteo.
             List<WebElement> resultados = driver.findElements(By.cssSelector("#search a h3"));
+            if (resultados.isEmpty()) {
+                // Ninguna de las dos estrategias encontro nada: guardar evidencia
+                // (screenshot + HTML) para diagnosticar que esta devolviendo Google
+                // realmente en este entorno, en vez de fallar a ciegas otra vez.
+                guardarDiagnostico("sin-resultados");
+            }
             return resultados.size();
+        }
+    }
+
+    private void guardarDiagnostico(String nombre) {
+        guardarScreenshot("diagnostico-" + nombre);
+        try {
+            Path destino = Path.of("target/screenshots/diagnostico-" + nombre + ".html");
+            Files.createDirectories(destino.getParent());
+            Files.writeString(destino, driver.getPageSource());
+        } catch (IOException e) {
+            System.err.println("No se pudo guardar el HTML de diagnostico: " + e.getMessage());
         }
     }
 

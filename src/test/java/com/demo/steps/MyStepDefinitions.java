@@ -6,13 +6,21 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MyStepDefinitions {
 
@@ -20,32 +28,19 @@ public class MyStepDefinitions {
 
     @Given("ir al navegador de Google Chrome")
     public void iAmOnGoogleSearchPage() {
-        // DESVIACION DELIBERADA del patron documentado en CLAUDE.md (Firefox +
-        // geckodriver). Este step normalmente lanza FirefoxDriver apuntando al
-        // geckodriver checked-in en src/test/java/com/demo/drivers/geckodriver.
-        // En este sandbox de ejecucion no existe forma de obtener un Firefox real:
-        // no hay apt/snap funcional (snapd no corre en el contenedor) y todos los
-        // dominios de descarga de Mozilla (download.mozilla.org, ftp.mozilla.org,
-        // archive.mozilla.org, download-installer.cdn.mozilla.net) estan bloqueados
-        // por la politica de egress del proxy corporativo (403, no reintentable).
-        // El geckodriver checked-in SI se reemplazo por un binario real linux64
-        // (v0.35.0, descargado de github.com/mozilla/geckodriver), pero sin un
-        // Firefox real no sirve de nada.
-        // Como plan B se usa Chromium (binario real ya presente en la imagen base
-        // en /opt/pw-browsers/chromium, version 141.0.7390.37) junto con un
-        // chromedriver real de Linux de esa MISMA version exacta, descargado desde
-        // Chrome for Testing (storage.googleapis.com) y checked-in en
-        // src/test/java/com/demo/drivers/chromedriver. Se corre en modo headless
-        // porque el sandbox no tiene display X11 real.
-        System.setProperty("webdriver.chrome.driver", "src/test/java/com/demo/drivers/chromedriver");
-
         ChromeOptions options = new ChromeOptions();
-        // Ruta del binario de Chromium especifica de este sandbox; en un entorno
-        // con Google Chrome/Chromium instalado de forma estandar no haria falta
-        // fijar setBinary. Se deja como override por system property para no
-        // hardcodear un path no portable en otros entornos.
-        String chromeBinary = System.getProperty("chrome.binary.path", "/opt/pw-browsers/chromium");
-        options.setBinary(chromeBinary);
+        // Este sandbox de ejecucion no tiene Chrome/Chromium en una ruta estandar
+        // del sistema, asi que se permite fijar el binario via system property.
+        // Fuera de este sandbox (dev local, CI) esta property no se define y
+        // Selenium Manager (incluido en selenium-java) detecta el navegador
+        // instalado automaticamente. El driver binario (chromedriver) tampoco se
+        // checkea en el repo: Selenium Manager lo descarga y cachea por version,
+        // igual en local que en CI, evitando el mismatch de versiones que exigia
+        // mantener un binario a mano.
+        String chromeBinary = System.getProperty("chrome.binary.path");
+        if (chromeBinary != null && !chromeBinary.isBlank()) {
+            options.setBinary(chromeBinary);
+        }
         options.addArguments("--headless=new");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
@@ -83,5 +78,36 @@ public class MyStepDefinitions {
 
         // Cerrar el navegador
         driver.quit();
+    }
+
+    @Then("validar que el título de la página contenga la palabra {string}")
+    public void verificarTituloContienePalabra(String palabra) throws InterruptedException {
+        Thread.sleep(1000);
+        String titulo = driver.getTitle();
+        guardarScreenshot("busqueda-" + palabra.toLowerCase());
+        assertTrue(
+                "Se esperaba que el título '" + titulo + "' contuviera '" + palabra + "'",
+                titulo.toLowerCase().contains(palabra.toLowerCase())
+        );
+        driver.quit();
+    }
+
+    @Then("el campo de búsqueda debe estar visible")
+    public void verificarCampoBusquedaVisible() {
+        WebElement campoBusqueda = driver.findElement(By.name("q"));
+        assertTrue("Se esperaba que el campo de búsqueda fuera visible", campoBusqueda.isDisplayed());
+        driver.quit();
+    }
+
+    private void guardarScreenshot(String nombre) {
+        try {
+            File origen = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            Path destino = Path.of("target/screenshots/" + nombre + ".png");
+            Files.createDirectories(destino.getParent());
+            Files.copy(origen.toPath(), destino, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            // Una captura fallida no debe tumbar el escenario; solo se pierde la evidencia.
+            System.err.println("No se pudo guardar el screenshot: " + e.getMessage());
+        }
     }
 }

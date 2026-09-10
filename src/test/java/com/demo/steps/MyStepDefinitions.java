@@ -8,21 +8,32 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class MyStepDefinitions {
+
+    // "I agree"/"Accept all" en el dialogo de consentimiento de cookies que Google
+    // muestra en la primera visita desde ciertas regiones (frecuente en runners de
+    // CI). El id L2AGLb es el que Google usa para ese boton desde hace anios.
+    private static final By CONSENT_ACCEPT_BUTTON = By.id("L2AGLb");
+    private static final By RESULT_STATS = By.id("result-stats");
 
     private WebDriver driver;
 
@@ -49,6 +60,7 @@ public class MyStepDefinitions {
 
         driver = new ChromeDriver(options);
         driver.get("https://www.google.com");
+        aceptarConsentimientoSiAparece();
     }
 
     @When("digitar la palabra {string} en el buscador")
@@ -64,19 +76,8 @@ public class MyStepDefinitions {
     }
 
     @Then("validar que el total de resultados de consulta sea diferente a cero")
-    public void verificarResultadosNoCero() throws InterruptedException {
-        // Encontrar el elemento que muestra el total de resultados
-        Thread.sleep(1000);
-        WebElement resultsStats = driver.findElement(By.id("result-stats"));
-
-        // Obtener el texto y extraer el número de resultados
-        String resultsText = resultsStats.getText();
-        int totalResults = Utils.extractTotalResults(resultsText);
-
-        // Verificar que el total de resultados no sea cero
-        assertNotEquals(0, totalResults);
-
-        // Cerrar el navegador
+    public void verificarResultadosNoCero() {
+        assertNotEquals(0, obtenerTotalResultados());
         driver.quit();
     }
 
@@ -97,6 +98,31 @@ public class MyStepDefinitions {
         WebElement campoBusqueda = driver.findElement(By.name("q"));
         assertTrue("Se esperaba que el campo de búsqueda fuera visible", campoBusqueda.isDisplayed());
         driver.quit();
+    }
+
+    private void aceptarConsentimientoSiAparece() {
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(3))
+                    .until(ExpectedConditions.elementToBeClickable(CONSENT_ACCEPT_BUTTON))
+                    .click();
+        } catch (TimeoutException e) {
+            // No aparecio el dialogo de consentimiento en esta region/sesion; se continua normal.
+        }
+    }
+
+    private int obtenerTotalResultados() {
+        try {
+            WebElement resultsStats = new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.presenceOfElementLocated(RESULT_STATS));
+            return Utils.extractTotalResults(resultsStats.getText());
+        } catch (TimeoutException e) {
+            // Google no siempre renderiza el texto "About X results" (id result-stats)
+            // con ese id exacto; como respaldo se cuentan los resultados organicos en
+            // el contenedor principal de resultados (id "search"), mucho mas estable
+            // en el markup de Google que el widget de conteo.
+            List<WebElement> resultados = driver.findElements(By.cssSelector("#search a h3"));
+            return resultados.size();
+        }
     }
 
     private void guardarScreenshot(String nombre) {

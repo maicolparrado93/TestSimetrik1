@@ -25,3 +25,21 @@ Feature: Como usuario de google quiero buscar la palabra simetrik y que no me tr
   Scenario: Verificar que el campo de búsqueda está visible al ingresar a Google
     Given ir al navegador de Google Chrome
     Then el campo de búsqueda debe estar visible
+
+  @TituloPaginaInicial
+  Scenario: Verificar el título de la página de inicio de Google
+    Given ir al navegador de Google Chrome
+    Then el título de la página de inicio debe ser "Google"
+
+  @CampoBusquedaEditable
+  Scenario: Verificar que se puede escribir en el campo de búsqueda sin enviar la búsqueda
+    Given ir al navegador de Google Chrome
+    When escribir "simetrik" en el campo de búsqueda sin enviar
+    Then el campo de búsqueda debe contener el texto "simetrik"
+
+  @BuscarFraseCompuesta
+  Scenario: Verificar una búsqueda de varias palabras
+    Given ir al navegador de Google Chrome
+    When digitar la palabra "simetrik selenium" en el buscador
+    And dar enter para que se inicie la busqueda
+    Then validar que el título de la página contenga la palabra "simetrik"

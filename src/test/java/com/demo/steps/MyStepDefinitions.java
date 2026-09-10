@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -97,6 +98,24 @@ public class MyStepDefinitions {
     public void verificarCampoBusquedaVisible() {
         WebElement campoBusqueda = driver.findElement(By.name("q"));
         assertTrue("Se esperaba que el campo de búsqueda fuera visible", campoBusqueda.isDisplayed());
+        driver.quit();
+    }
+
+    @Then("el título de la página de inicio debe ser {string}")
+    public void verificarTituloPaginaInicial(String tituloEsperado) {
+        assertEquals(tituloEsperado, driver.getTitle());
+        driver.quit();
+    }
+
+    @When("escribir {string} en el campo de búsqueda sin enviar")
+    public void escribirSinEnviar(String texto) {
+        driver.findElement(By.name("q")).sendKeys(texto);
+    }
+
+    @Then("el campo de búsqueda debe contener el texto {string}")
+    public void verificarCampoBusquedaContieneTexto(String textoEsperado) {
+        String valorActual = driver.findElement(By.name("q")).getAttribute("value");
+        assertEquals(textoEsperado, valorActual);
         driver.quit();
     }
 

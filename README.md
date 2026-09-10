@@ -30,9 +30,9 @@ El reporte HTML de Cucumber queda en `target/cucumber-reports/`; las capturas de
 
 ### Nota sobre CI y reCAPTCHA de Google
 
-Los tres escenarios que buscan algo en Google (`@BuscarPalabra`, `@BuscarSelenium`, `@BuscarTituloCucumber`) fallan de forma determinística en GitHub Actions: Google le muestra un reCAPTCHA a las IPs compartidas de los runners en vez de resultados de búsqueda — es un bloqueo anti-bot del lado de Google, no un bug de este repo ni de los selectores. Se confirmó inspeccionando el HTML devuelto en CI (aparece `<div id="recaptcha" class="g-recaptcha">`).
+Los escenarios que ejecutan una búsqueda real (`@BuscarPalabra`, `@BuscarSelenium`, `@BuscarTituloCucumber`, `@BuscarFraseCompuesta`) fallan de forma determinística en GitHub Actions: Google le muestra un reCAPTCHA a las IPs compartidas de los runners en vez de resultados de búsqueda — es un bloqueo anti-bot del lado de Google, no un bug de este repo ni de los selectores. Se confirmó inspeccionando el HTML devuelto en CI (aparece `<div id="recaptcha" class="g-recaptcha">`). Los escenarios que no ejecutan una búsqueda (`@CampoBusquedaVisible`, `@TituloPaginaInicial`, `@CampoBusquedaEditable`) sí pasan de forma confiable en CI, porque solo interactúan con la página de inicio.
 
-Por eso el job de CI corre con `continue-on-error` en el paso de tests: el check queda en verde, pero el resumen del run (`Report suite outcome`, en la pestaña *Summary* de cada ejecución) dice explícitamente si la suite pasó o falló, y por qué. Localmente, desde una IP residencial normal, los cuatro escenarios sí corren contra Google real.
+Por eso el job de CI corre con `continue-on-error` en el paso de tests: el check queda en verde, pero el resumen del run (`Report suite outcome`, en la pestaña *Summary* de cada ejecución) dice explícitamente si la suite pasó o falló, y por qué. Localmente, desde una IP residencial normal, los siete escenarios sí corren contra Google real.
 
 ## Escenarios
 
@@ -42,6 +42,9 @@ Por eso el job de CI corre con `continue-on-error` en el paso de tests: el check
 | `@BuscarSelenium` | Buscar "selenium" en Google devuelve más de cero resultados |
 | `@BuscarTituloCucumber` | El `<title>` de la página de resultados contiene la palabra buscada |
 | `@CampoBusquedaVisible` | El campo de búsqueda de Google es visible al cargar la página |
+| `@TituloPaginaInicial` | El `<title>` de la página de inicio es exactamente "Google" |
+| `@CampoBusquedaEditable` | Se puede escribir en el campo de búsqueda sin enviar el formulario |
+| `@BuscarFraseCompuesta` | Buscar una frase de varias palabras refleja una de ellas en el título |
 
 ## Arquitectura
 
